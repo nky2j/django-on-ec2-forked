@@ -16,11 +16,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    # Step 2: Set up SSH and add the key
+    # Step 2: Set up SSH key from multiline secret
     - name: Set up SSH
-      env: 
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-      
       run: |
         # Create the .ssh directory if it doesn't exist
         mkdir -p ~/.ssh
@@ -31,15 +28,32 @@ jobs:
         # Add EC2 host to known hosts to avoid host verification prompts
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-    # Step 3: Copy the project files to the EC2 instance using SCP (Secure Copy)
+    # Step 3: Check and add the public key to the EC2 instance
+    - name: Add Public Key to EC2 Instance
+      run: |
+        # Extract the public key from the private key
+        PUBLIC_KEY=$(ssh-keygen -y -f ssh_key.pem)
+        
+        # Connect to the EC2 instance and append the public key to authorized_keys if not present
+        ssh -o StrictHostKeyChecking=no -i ssh_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          if ! grep -q "${PUBLIC_KEY}" ~/.ssh/authorized_keys; then
+            echo "${PUBLIC_KEY}" >> ~/.ssh/authorized_keys
+            chmod 600 ~/.ssh/authorized_keys
+            echo "Public key added to authorized_keys"
+          else
+            echo "Public key already exists in authorized_keys"
+          fi
+        EOF
+
+    # Step 4: Copy the project files to the EC2 instance using SCP
     - name: Copy files via SCP
       run: |
-        scp -r -o StrictHostKeyChecking=no ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/path/to/django/project
+        scp -r -o StrictHostKeyChecking=no -i ssh_key.pem ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/path/to/django/project
 
-    # Step 4: Run commands on the EC2 instance to set up the Django application
+    # Step 5: Run commands on the EC2 instance to set up the Django application
     - name: Run SSH Commands
       run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no -i ssh_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
           # Change to the Django project directory
           cd /path/to/django/project
           # Activate the virtual environment
