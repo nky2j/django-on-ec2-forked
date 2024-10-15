@@ -1,5 +1,3 @@
-# .github/workflows/deploy.yml
-
 name: Django Deployment
 
 on:
@@ -57,28 +55,34 @@ jobs:
         EOF
 
 
-    # Step 5: Copy the project files to the EC2 instance using SCP
-    - name: Copy files via SCP
+    # Step 5: Create the django_ec2_deploy directory and copy the project files to the EC2 instance using SCP
+    - name: Create Directory and Copy files via SCP
       run: |
-           scp -r -o StrictHostKeyChecking=no -i ssh_key.pem /home/runner/work/django-on-ec2-forked/django-on-ec2-forked/* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/.ssh/
-  
-    
-    # Step 6: Run commands on the EC2 instance to set up the Django application
-    - name: Run SSH Commands
-      run: |
+        # Create the django_ec2_deploy directory on the EC2 instance
         ssh -o StrictHostKeyChecking=no -i ssh_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          # Change to the Django project directory
-          cd /path/to/django/project
-          # Activate the virtual environment
-          source /path/to/venv/bin/activate
-          # Install required Python packages
-          pip install -r requirements.txt
-          # Run Django database migrations
-          python manage.py migrate
-          # Collect static files for Django
-          python manage.py collectstatic --noinput
-          # Restart the Gunicorn service (WSGI server)
-          sudo systemctl restart gunicorn
-          # Restart the Nginx web server
-          sudo systemctl restart nginx
+          mkdir -p ~/django_ec2_deploy
         EOF
+        
+        # Copy project files to the newly created directory
+        scp -r -o StrictHostKeyChecking=no -i ssh_key.pem /home/runner/work/django-on-ec2-forked/django-on-ec2-forked/* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/django_ec2_deploy/
+    
+
+    # Step 6: Run commands on the EC2 instance to set up the Django application
+    #- name: Run SSH Commands
+    #  run: |
+    #    ssh -o StrictHostKeyChecking=no -i ssh_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+    #      # Change to the Django project directory
+    #     cd /path/to/django/project
+    #      # Activate the virtual environment
+    #      source /path/to/venv/bin/activate
+    #      # Install required Python packages
+    #      pip install -r requirements.txt
+    #      # Run Django database migrations
+    #      python manage.py migrate
+    #      # Collect static files for Django
+    #      python manage.py collectstatic --noinput
+    #      # Restart the Gunicorn service (WSGI server)
+    #      sudo systemctl restart gunicorn
+    #      # Restart the Nginx web server
+    #      sudo systemctl restart nginx
+    #    EOF
