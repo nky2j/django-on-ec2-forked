@@ -45,6 +45,9 @@ jobs:
           fi
         EOF
 
+        echo "Current directory: $(pwd)"
+        ls -la
+
     # Step 4: Copy the project files to the EC2 instance using SCP
     - name: Copy files via SCP
       run: |
