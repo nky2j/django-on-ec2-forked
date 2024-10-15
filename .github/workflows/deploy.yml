@@ -64,7 +64,7 @@ jobs:
         #EOF
         
         # Copy project files to the newly created directory
-        scp -r -o StrictHostKeyChecking=no -i ssh_key.pem /home/runner/work/django-on-ec2-forked/django-on-ec2-forked/* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/django_ec2_deploy/
+        scp -r -o StrictHostKeyChecking=no -i ssh_key.pem /home/runner/work/django-on-ec2-forked/django-on-ec2-forked/. ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/django_ec2_deploy/
     
     # Step 6: List the contents of the django_ec2_deploy directory to verify files were copied
     - name: List Contents of django_ec2_deploy Directory on EC2
