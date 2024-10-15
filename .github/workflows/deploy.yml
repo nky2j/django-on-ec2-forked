@@ -18,7 +18,8 @@ jobs:
     - name: Set up SSH
       run: |
         echo "${{ secrets.EC2_SSH_KEY }}" > ssh_key.pem
-        chmod 600 ssh_key.pem
+        chmod 400 /path/to/ssh_key.pem
+        ssh -i /path/to/ssh_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}
         eval $(ssh-agent -s)
         ssh-add ssh_key.pem
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
