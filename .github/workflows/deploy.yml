@@ -12,30 +12,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # Step 1: Check out the code from the repository
     - name: Checkout code
       uses: actions/checkout@v2
 
+    # Step 2: Set up SSH and add the key
     - name: Set up SSH
       run: |
+        # Write the SSH private key to a file
         echo "${{ secrets.EC2_SSH_KEY }}" > ssh_key.pem
-        chmod 400 /path/to/ssh_key.pem
-        ssh -i /path/to/ssh_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}
+        # Ensure the key has the correct permissions
+        chmod 400 ssh_key.pem
+        # Start the SSH agent
         eval $(ssh-agent -s)
+        # Add the SSH private key to the agent
         ssh-add ssh_key.pem
+        # Automatically add the EC2 host to the known hosts to avoid host key verification prompt
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Copy files via SCP ##SCP (Secure Copy Protocol) to securely transfer files from the local GitHub Actions runner to the EC2 instance
+    # Step 3: Copy the project files to the EC2 instance using SCP (Secure Copy)
+    - name: Copy files via SCP
       run: |
         scp -r -o StrictHostKeyChecking=no ./ ubuntu@${{ secrets.EC2_HOST }}:/path/to/django/project
 
+    # Step 4: Run commands on the EC2 instance to set up the Django application
     - name: Run SSH Commands
       run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'     #opens an SSH (Secure Shell) connection to the EC2 instance.
-          cd /path/to/django/project 
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+          # Change to the Django project directory
+          cd /path/to/django/project
+          # Activate the virtual environment
           source /path/to/venv/bin/activate
+          # Install required Python packages
           pip install -r requirements.txt
+          # Run Django database migrations
           python manage.py migrate
+          # Collect static files for Django
           python manage.py collectstatic --noinput
-          sudo systemctl restart gunicorn  #Restarts the Gunicorn service, which is the WSGI server used to serve the Django app
+          # Restart the Gunicorn service (WSGI server)
+          sudo systemctl restart gunicorn
+          # Restart the Nginx web server
           sudo systemctl restart nginx
         EOF
