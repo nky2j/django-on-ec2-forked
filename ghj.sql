@@ -1,0 +1,1 @@
+Create table if not exist fgh(phone varchar);
