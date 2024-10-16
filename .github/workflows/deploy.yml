@@ -70,11 +70,11 @@ jobs:
         ls -la
 
     # Step 4: List the contents of the destination directory on the EC2 instance
-    - name: List Destination Directory on EC2
+    - name: List Contents of django_ec2_deploy Directory on EC2 before copying
       run: |
         ssh -o StrictHostKeyChecking=no -i ssh_key.pem ${{ vars.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          echo "Listing contents of Destination Directory on EC2:"
-          ls -la
+          echo "Contents of django_ec2_deploy Directory on EC2 before coppying files:"
+          ls -la ~/django_ec2_deploy
         EOF
 
 
@@ -95,10 +95,10 @@ jobs:
 
 
     # Step 6: List the contents of the django_ec2_deploy directory to verify files were copied
-    - name: List Contents of django_ec2_deploy Directory on EC2
+    - name: List Contents of django_ec2_deploy Directory on EC2 after copying
       run: |
         ssh -o StrictHostKeyChecking=no -i ssh_key.pem ${{ vars.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          echo "Listing contents of django_ec2_deploy Directory on EC2:"
+          echo "Contents of django_ec2_deploy Directory on EC2 after coppying files:"
           ls -la ~/django_ec2_deploy
         EOF
 
